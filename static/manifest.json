@@ -1,0 +1,139 @@
+{
+    "name": "VantaVault",
+    "short_name": "VantaVault",
+    "description": "High-security media vault for photos and videos",
+    "start_url": "/",
+    "display": "standalone",
+    "display_override": ["window-controls-overlay"],
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "categories": ["security", "productivity", "utilities"],
+    "icons": [
+        {
+            "src": "/static/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/icons/icon-192-maskable.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/static/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/icons/icon-512-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "/static/screenshots/phone.png",
+            "sizes": "720x1280",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "VantaVault Lock Screen"
+        },
+        {
+            "src": "/static/screenshots/tablet.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "VantaVault Dashboard"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Open Vault",
+            "short_name": "Vault",
+            "description": "Open secure vault",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/static/icons/shortcut-vault.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Add Media",
+            "short_name": "Add",
+            "description": "Add new media to vault",
+            "url": "/gallery?action=upload",
+            "icons": [
+                {
+                    "src": "/static/icons/shortcut-add.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Quick Lock",
+            "short_name": "Lock",
+            "description": "Lock the vault immediately",
+            "url": "/lock",
+            "icons": [
+                {
+                    "src": "/static/icons/shortcut-lock.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "protocol_handlers": [
+        {
+            "protocol": "web+vantavault",
+            "url": "/open?url=%s"
+        }
+    ],
+    "edge_side_panel": {
+        "preferred_width": 400
+    },
+    "launch_handler": {
+        "client_mode": "focus-existing"
+    },
+    "handle_links": "preferred",
+    "permissions": [
+        "clipboard-write",
+        "clipboard-read",
+        "fileHandling",
+        "fileSystemAccess"
+    ],
+    "file_handlers": [
+        {
+            "action": "/api/media/upload",
+            "accept": {
+                "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"],
+                "video/*": [".mp4", ".mov", ".avi", ".mkv", ".webm"]
+            }
+        }
+    ],
+    "share_target": {
+        "action": "/api/media/upload",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "name",
+            "text": "description",
+            "url": "link",
+            "files": [
+                {
+                    "name": "file",
+                    "accept": ["image/*", "video/*"]
+                }
+            ]
+        }
+    },
+    "related_applications": [],
+    "prefer_related_applications": false
+}
