@@ -1,0 +1,6 @@
+# Working on Termux
+Flask==2.3.3
+Flask-CORS==4.0.0
+cryptography==40.0.2
+Pillow==10.0.0
+Werkzeug==2.3.7
