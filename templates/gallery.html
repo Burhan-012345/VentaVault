@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+
+{% block title %} - Gallery{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/gallery.css">
+{% endblock %}
+
+{% block content %}
+<div class="gallery-container">
+    <!-- Header -->
+    <div class="gallery-header">
+        <div class="gallery-title">
+            <h1>Media Gallery</h1>
+            <div class="gallery-stats" id="galleryStats">
+                <span>0 items</span>
+                <span>•</span>
+                <span>0 MB</span>
+            </div>
+        </div>
+        
+        <div class="gallery-actions">
+            <button class="btn btn-secondary" onclick="showFolderManager()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                </svg>
+                Folders
+            </button>
+            <button class="btn" onclick="showUploadModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 4v16m8-8H4"/>
+                </svg>
+                Upload
+            </button>
+        </div>
+    </div>
+    
+    <!-- Folder Navigation -->
+    <div class="folder-nav" id="folderNav">
+        <button class="folder-btn active" data-folder="default">
+            📁 All Media
+            <span class="count">0</span>
+        </button>
+        <!-- Folders will be loaded dynamically -->
+    </div>
+    
+    <!-- Gallery Grid -->
+    <div class="gallery-grid" id="galleryGrid">
+        <!-- Media items will be loaded here -->
+    </div>
+    
+    <!-- Empty State (shown when no media) -->
+    <div class="empty-gallery" style="display: none;" id="emptyGallery">
+        <div class="empty-icon">📷</div>
+        <h3>No Media Yet</h3>
+        <p>Upload photos and videos to get started</p>
+        <button class="btn" onclick="showUploadModal()">
+            Upload First File
+        </button>
+    </div>
+</div>
+
+<!-- Selection Bar -->
+<div class="selection-bar" id="selectionBar" style="display: none;">
+    <div class="selection-count" id="selectedCount">0 selected</div>
+    <div class="selection-actions">
+        <button class="btn btn-secondary" onclick="gallery.clearSelection()">
+            Clear
+        </button>
+        <button class="btn" onclick="shareSelected()">
+            Share
+        </button>
+        <button class="btn btn-danger" onclick="gallery.deleteSelected()">
+            Delete
+        </button>
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal" id="uploadModal" style="display: none;">
+    <div class="modal-content">
+        <h2>Upload Media</h2>
+        <p>Select files to add to your vault</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-placeholder">
+                <div class="upload-icon">📁</div>
+                <p>Drag & drop files here</p>
+                <p class="upload-hint">or click to browse</p>
+                <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display: none;">
+            </div>
+        </div>
+        
+        <div class="upload-queue" id="uploadQueue">
+            <h3>Upload Queue</h3>
+            <div class="queue-list" id="uploadQueueList">
+                <!-- Queue items will be added here -->
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeUploadModal()">
+                Cancel
+            </button>
+            <button class="btn" id="uploadBtn" disabled>
+                Upload (0)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Folder Manager Modal -->
+<div class="modal" id="folderModal" style="display: none;">
+    <div class="modal-content">
+        <h2>Manage Folders</h2>
+        
+        <div class="folder-manager">
+            <div class="folder-list" id="folderList">
+                <!-- Folders will be loaded here -->
+            </div>
+            
+            <div class="folder-create">
+                <h3>Create New Folder</h3>
+                <div class="input-group">
+                    <input type="text" id="newFolderName" class="form-control" placeholder="Folder name">
+                    <button class="btn" onclick="createFolder()">Create</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn" onclick="closeFolderManager()">Done</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/gallery.js"></script>
+<script>
+    // Folder management
+    async function loadFolders() {
+        try {
+            const response = await fetch('/api/folders');
+            const data = await response.json();
+            
+            const folderNav = document.getElementById('folderNav');
+            const folderList = document.getElementById('folderList');
+            
+            // Clear existing folders (except "All Media")
+            const existingFolders = folderNav.querySelectorAll('.folder-btn:not([data-folder="default"])');
+            existingFolders.forEach(folder => folder.remove());
+            
+            folderList.innerHTML = '';
+            
+            if (data.folders && data.folders.length > 0) {
+                data.folders.forEach(folder => {
+                    // Add to navigation
+                    const folderBtn = document.createElement('button');
+                    folderBtn.className = 'folder-btn';
+                    folderBtn.dataset.folder = folder.id;
+                    folderBtn.innerHTML = `
+                        📂 ${folder.name}
+                        <span class="count">${folder.count || 0}</span>
+                    `;
+                    folderBtn.onclick = () => gallery.switchFolder(folder.id);
+                    folderNav.appendChild(folderBtn);
+                    
+                    // Add to folder manager
+                    const folderItem = document.createElement('div');
+                    folderItem.className = 'folder-item';
+                    folderItem.innerHTML = `
+                        <div class="folder-info">
+                            <span>📂 ${folder.name}</span>
+                            <span class="folder-count">${folder.count || 0} items</span>
+                        </div>
+                        <div class="folder-actions">
+                            <button class="btn-icon" onclick="renameFolder('${folder.id}', '${folder.name}')" title="Rename">
+                                ✏️
+                            </button>
+                            <button class="btn-icon danger" onclick="deleteFolder('${folder.id}')" title="Delete">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    folderList.appendChild(folderItem);
+                });
+            } else {
+                folderList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No folders yet</p>';
+            }
+            
+        } catch (error) {
+            console.error('Failed to load folders:', error);
+        }
+    }
+    
+    async function createFolder() {
+        const nameInput = document.getElementById('newFolderName');
+        const name = nameInput.value.trim();
+        
+        if (!name) {
+            window.vantaVault.showNotification('Please enter a folder name', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/folders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: name })
+            });
+            
+            const data = await response.json();
+            
+            if (data.folder_id) {
+                window.vantaVault.showNotification('Folder created', 'success');
+                nameInput.value = '';
+                await loadFolders();
+            } else {
+                throw new Error('Failed to create folder');
+            }
+            
+        } catch (error) {
+            console.error('Failed to create folder:', error);
+            window.vantaVault.showNotification('Failed to create folder', 'error');
+        }
+    }
+    
+    async function renameFolder(folderId, currentName) {
+        const newName = prompt('Enter new folder name:', currentName);
+        if (!newName || newName.trim() === '') return;
+        
+        try {
+            const response = await fetch(`/api/folders/${folderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: newName.trim() })
+            });
+            
+            if (response.ok) {
+                window.vantaVault.showNotification('Folder renamed', 'success');
+                await loadFolders();
+                
+                // If this is the current folder, reload gallery
+                if (gallery.currentFolder === folderId) {
+                    await gallery.loadGallery();
+                }
+            } else {
+                throw new Error('Failed to rename folder');
+            }
+            
+        } catch (error) {
+            console.error('Failed to rename folder:', error);
+            window.vantaVault.showNotification('Failed to rename folder', 'error');
+        }
+    }
+    
+    async function deleteFolder(folderId) {
+        if (!confirm('Delete this folder? Files will be moved to "All Media".')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/folders/${folderId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                window.vantaVault.showNotification('Folder deleted', 'success');
+                await loadFolders();
+                
+                // If this was the current folder, switch to default
+                if (gallery.currentFolder === folderId) {
+                    gallery.switchFolder('default');
+                }
+            } else {
+                throw new Error('Failed to delete folder');
+            }
+            
+        } catch (error) {
+            console.error('Failed to delete folder:', error);
+            window.vantaVault.showNotification('Failed to delete folder', 'error');
+        }
+    }
+    
+    function showFolderManager() {
+        loadFolders();
+        document.getElementById('folderModal').style.display = 'flex';
+    }
+    
+    function closeFolderManager() {
+        document.getElementById('folderModal').style.display = 'none';
+    }
+    
+    // Selected items sharing
+    async function shareSelected() {
+        if (gallery.selectedMedia.size === 0) return;
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2>Share ${gallery.selectedMedia.size} Item(s)</h2>
+                
+                <div class="form-group">
+                    <label>Expiry Time</label>
+                    <select id="batchShareExpiry" class="form-control">
+                        <option value="1">1 hour</option>
+                        <option value="24" selected>24 hours</option>
+                        <option value="168">7 days</option>
+                        <option value="720">30 days</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Maximum Views</label>
+                    <input type="number" id="batchShareMaxViews" class="form-control" value="1" min="1" max="10">
+                </div>
+                
+                <div class="share-progress" style="display: none;">
+                    <div class="progress-text">Creating share links...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="batchProgressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="share-results" id="batchShareResults" style="display: none;">
+                    <!-- Results will be shown here -->
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button class="btn" onclick="createBatchShareLinks()">Create Links</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+    
+    async function createBatchShareLinks() {
+        const expiry = document.getElementById('batchShareExpiry').value;
+        const maxViews = document.getElementById('batchShareMaxViews').value;
+        
+        const progressSection = document.querySelector('.share-progress');
+        const resultsSection = document.getElementById('batchShareResults');
+        const progressFill = document.getElementById('batchProgressFill');
+        
+        progressSection.style.display = 'block';
+        resultsSection.style.display = 'none';
+        resultsSection.innerHTML = '';
+        
+        const mediaIds = Array.from(gallery.selectedMedia);
+        const results = [];
+        
+        for (let i = 0; i < mediaIds.length; i++) {
+            const mediaId = mediaIds[i];
+            
+            // Update progress
+            const percent = ((i + 1) / mediaIds.length) * 100;
+            progressFill.style.width = percent + '%';
+            
+            try {
+                const response = await fetch('/api/share/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        media_id: mediaId,
+                        expiry_hours: parseInt(expiry),
+                        max_views: parseInt(maxViews)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.share_token) {
+                    const shareUrl = `${window.location.origin}/share/${data.share_token}`;
+                    results.push({
+                        mediaId: mediaId,
+                        url: shareUrl,
+                        success: true
+                    });
+                } else {
+                    results.push({
+                        mediaId: mediaId,
+                        error: 'Failed to create link',
+                        success: false
+                    });
+                }
+                
+            } catch (error) {
+                results.push({
+                    mediaId: mediaId,
+                    error: 'Network error',
+                    success: false
+                });
+            }
+        }
+        
+        // Show results
+        progressSection.style.display = 'none';
+        resultsSection.style.display = 'block';
+        
+        let resultsHTML = '<h3>Share Links Created</h3>';
+        
+        results.forEach(result => {
+            if (result.success) {
+                resultsHTML += `
+                    <div class="share-result success">
+                        <div>✅ Item ${result.mediaId}</div>
+                        <div class="share-link">
+                            <input type="text" value="${result.url}" readonly>
+                            <button class="btn btn-small" onclick="vantaVault.copyToClipboard('${result.url}')">Copy</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultsHTML += `
+                    <div class="share-result error">
+                        <div>❌ Item ${result.mediaId}: ${result.error}</div>
+                    </div>
+                `;
+            }
+        });
+        
+        resultsSection.innerHTML = resultsHTML;
+    }
+    
+    // Initialize gallery when page loads
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Load folders
+        await loadFolders();
+        
+        // Set up folder click handlers
+        document.querySelectorAll('.folder-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.folder-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Check for upload parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('upload') === 'true') {
+            showUploadModal();
+        }
+    });
+    
+    // Add CSS for folder manager
+    const folderStyles = document.createElement('style');
+    folderStyles.textContent = `
+        .folder-manager {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin: 1.5rem 0;
+        }
+        
+        .folder-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+        }
+        
+        .folder-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+        }
+        
+        .folder-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .folder-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .folder-count {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .folder-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+        
+        .btn-icon.danger:hover {
+            background: rgba(255, 51, 51, 0.1);
+            color: #ff3333;
+        }
+        
+        .folder-create {
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+        
+        .folder-create h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .input-group .form-control {
+            flex: 1;
+        }
+        
+        .share-result {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            border-left: 4px solid transparent;
+        }
+        
+        .share-result.success {
+            border-left-color: var(--color-success);
+        }
+        
+        .share-result.error {
+            border-left-color: var(--color-danger);
+        }
+        
+        .share-link {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .share-link input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.5rem;
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .share-progress {
+            margin: 1rem 0;
+        }
+        
+        .progress-text {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+    `;
+    document.head.appendChild(folderStyles);
+</script>
+{% endblock %}

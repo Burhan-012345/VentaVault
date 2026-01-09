@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %} - Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    .dashboard {
+        padding: 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #f5f5f5;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .action-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 12px;
+        padding: 1.5rem 1rem;
+        color: #f5f5f5;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .action-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .action-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .recent-media {
+        margin-top: 2rem;
+    }
+    
+    .media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .media-item {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .media-thumbnail {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .lock-btn {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: #f5f5f5;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .lock-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1>Vault Dashboard</h1>
+            <p class="subtitle">Last unlocked: <span id="lastUnlockTime">Just now</span></p>
+        </div>
+        <button class="btn btn-outline" onclick="location.href='/settings'">⚙️ Settings</button>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-card">
+            <div class="stat-value" id="totalMedia">0</div>
+            <div class="stat-label">Total Media</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="storageUsed">0 MB</div>
+            <div class="stat-label">Storage Used</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="foldersCount">0</div>
+            <div class="stat-label">Folders</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="securityLevel">High</div>
+            <div class="stat-label">Security Level</div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <button class="action-btn" onclick="location.href='/gallery?upload=true'">
+            <svg fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Media
+        </button>
+        <button class="action-btn" onclick="location.href='/gallery'">
+            <svg fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M21 15l-5-5-5 5"/>
+            </svg>
+            View Gallery
+        </button>
+        <button class="action-btn" onclick="location.href='/gallery?folders=true'">
+            <svg fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+            Manage Folders
+        </button>
+        <button class="action-btn" onclick="showShareModal()">
+            <svg fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+            Share Securely
+        </button>
+    </div>
+    
+    <!-- Recent Media -->
+    <div class="recent-media">
+        <h2>Recent Media</h2>
+        <div class="media-grid" id="recentMediaGrid">
+            <!-- Media items will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- Lock Button -->
+    <button class="lock-btn" onclick="lockVault()" title="Lock Vault">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+    </button>
+</div>
+
+<!-- Share Modal -->
+<div class="modal" id="shareModal" style="display: none;">
+    <div class="modal-content">
+        <h2>Secure Sharing</h2>
+        <p>Create temporary share links for your media</p>
+        
+        <div class="form-group">
+            <label>Select Media</label>
+            <select id="shareMediaSelect" class="form-control">
+                <!-- Options will be populated -->
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Expiry Time</label>
+            <select id="shareExpiry" class="form-control">
+                <option value="1">1 hour</option>
+                <option value="24" selected>24 hours</option>
+                <option value="168">7 days</option>
+                <option value="720">30 days</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Maximum Views</label>
+            <input type="number" id="maxViews" class="form-control" value="1" min="1" max="10">
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeShareModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="createShareLink()">Create Link</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/gallery.js"></script>
+<script>
+    // Load dashboard data
+    async function loadDashboardData() {
+        try {
+            // Load stats
+            const response = await fetch('/api/media/list?limit=5');
+            const data = await response.json();
+            
+            // Update stats
+            document.getElementById('totalMedia').textContent = data.total || 0;
+            document.getElementById('storageUsed').textContent = data.storage || '0 MB';
+            document.getElementById('foldersCount').textContent = data.folders || 0;
+            
+            // Load recent media
+            const mediaGrid = document.getElementById('recentMediaGrid');
+            mediaGrid.innerHTML = '';
+            
+            if (data.media && data.media.length > 0) {
+                data.media.forEach(media => {
+                    const mediaItem = document.createElement('div');
+                    mediaItem.className = 'media-item';
+                    mediaItem.innerHTML = `
+                        <img src="/api/media/thumbnail/${media.id}" 
+                             alt="${media.filename}" 
+                             class="media-thumbnail"
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiMxYTFhMWEiLz48cGF0aCBkPSJNNzUgNDVINDFDMzguNzkwOSA0NSAzNyA0Ni43OTA5IDM3IDQ5Vjc5QzM3IDgxLjIwOTEgMzguNzkwOSA4MyA0MSA4M0g3OUM4MS4yMDkxIDgzIDgzIDgxLjIwOTEgODMgNzlWNTVDODMgNTIuNzkwOSA4MS4yMDkxIDUxIDc5IDUxSDc1VjQ1WiIgZmlsbD0iIzI2MjYyNiIvPjwvc3ZnPg==';">
+                    `;
+                    mediaItem.onclick = () => viewMedia(media.id);
+                    mediaGrid.appendChild(mediaItem);
+                });
+            }
+            
+            // Update last unlock time
+            const lastUnlock = localStorage.getItem('lastUnlock');
+            if (lastUnlock) {
+                document.getElementById('lastUnlockTime').textContent = 
+                    new Date(lastUnlock).toLocaleString();
+            }
+            
+        } catch (error) {
+            console.error('Failed to load dashboard data:', error);
+        }
+    }
+    
+    // Lock vault
+    async function lockVault() {
+        try {
+            await fetch('/api/lock', { method: 'POST' });
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Failed to lock vault:', error);
+        }
+    }
+    
+    // Auto-lock on inactivity
+    let inactivityTimer;
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(() => {
+            if (document.visibilityState === 'visible') {
+                lockVault();
+            }
+        }, 5 * 60 * 1000); // 5 minutes
+    }
+    
+    // Event listeners for activity
+    ['mousemove', 'keypress', 'click', 'scroll'].forEach(event => {
+        document.addEventListener(event, resetInactivityTimer);
+    });
+    
+    // Lock when tab/app is minimized
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            // Optional: lock immediately when minimized
+            // lockVault();
+        }
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboardData();
+        resetInactivityTimer();
+    });
+</script>
+{% endblock %}

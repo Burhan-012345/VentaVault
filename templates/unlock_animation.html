@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %} - Unlocking{% endblock %}
+
+{% block head %}
+<style>
+    .unlock-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .vault-door {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .door-left, .door-right {
+        position: absolute;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        top: 0;
+        transition: transform 1.5s ease-in-out;
+    }
+    
+    .door-left {
+        left: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        transform-origin: left center;
+    }
+    
+    .door-right {
+        right: 0;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        transform-origin: right center;
+    }
+    
+    .scan-beam {
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            #00ff00 20%, 
+            #00ff00 80%, 
+            transparent 100%);
+        box-shadow: 0 0 20px #00ff00;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0;
+    }
+    
+    .glow-effect {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(circle, 
+            rgba(0, 255, 0, 0.3) 0%, 
+            rgba(0, 255, 0, 0.1) 40%, 
+            transparent 70%);
+        opacity: 0;
+    }
+    
+    .unlock-progress {
+        width: 80%;
+        max-width: 300px;
+        margin-top: 2rem;
+    }
+    
+    .progress-text {
+        color: #f5f5f5;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #00ff00, #00cc00);
+        transition: width 3.8s linear;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="unlock-animation" id="unlockAnimation">
+    <div class="vault-door">
+        <div class="door-left" id="doorLeft"></div>
+        <div class="door-right" id="doorRight"></div>
+        <div class="scan-beam" id="scanBeam"></div>
+        <div class="glow-effect" id="glowEffect"></div>
+    </div>
+    
+    <div class="unlock-progress">
+        <div class="progress-text" id="progressText">Initializing security protocols...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Get animation token from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (!token) {
+        window.location.href = '/';
+    }
+    
+    // Start unlock animation
+    document.addEventListener('DOMContentLoaded', () => {
+        const tl = gsap.timeline({
+            onComplete: () => {
+                // Redirect to dashboard after animation
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 500);
+            }
+        });
+        
+        // Sequence 1: Security scan
+        tl.to('#scanBeam', {
+            opacity: 1,
+            duration: 0.5
+        })
+        .to('#scanBeam', {
+            y: '-=100',
+            duration: 1,
+            ease: 'power2.inOut'
+        })
+        .to('#scanBeam', {
+            y: '+=100',
+            duration: 1,
+            ease: 'power2.inOut'
+        })
+        .to('#scanBeam', {
+            opacity: 0,
+            duration: 0.5
+        });
+        
+        // Update progress text
+        tl.call(() => {
+            document.getElementById('progressText').textContent = 'Verifying credentials...';
+            document.getElementById('progressFill').style.width = '25%';
+        });
+        
+        // Sequence 2: Glow effect
+        tl.to('#glowEffect', {
+            opacity: 1,
+            duration: 0.5,
+            ease: 'power2.out'
+        })
+        .to('#glowEffect', {
+            scale: 1.5,
+            duration: 1,
+            ease: 'power2.inOut'
+        })
+        .to('#glowEffect', {
+            opacity: 0,
+            duration: 0.5
+        });
+        
+        // Update progress text
+        tl.call(() => {
+            document.getElementById('progressText').textContent = 'Decrypting vault...';
+            document.getElementById('progressFill').style.width = '50%';
+        });
+        
+        // Sequence 3: Door opening
+        tl.to('#doorLeft', {
+            rotationY: -90,
+            duration: 1,
+            ease: 'power2.inOut'
+        }, '-=0.5')
+        .to('#doorRight', {
+            rotationY: 90,
+            duration: 1,
+            ease: 'power2.inOut'
+        }, '-=1');
+        
+        // Update progress text
+        tl.call(() => {
+            document.getElementById('progressText').textContent = 'Loading secure environment...';
+            document.getElementById('progressFill').style.width = '75%';
+        });
+        
+        // Sequence 4: Final transition
+        tl.to('#unlockAnimation', {
+            opacity: 0,
+            duration: 0.8,
+            ease: 'power2.in'
+        });
+        
+        tl.call(() => {
+            document.getElementById('progressText').textContent = 'Access granted!';
+            document.getElementById('progressFill').style.width = '100%';
+        });
+    });
+    
+    // Prevent back navigation during animation
+    history.pushState(null, null, location.href);
+    window.onpopstate = function() {
+        history.go(1);
+    };
+</script>
+{% endblock %}

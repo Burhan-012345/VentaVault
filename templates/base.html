@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <!-- OPTIMIZED SINGLE VIEWPORT TAG FOR MOBILE -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover, user-scalable=yes">
+    <meta name="theme-color" content="#000000">
+    
+    <!-- PWA MOBILE OPTIMIZATIONS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VantaVault">
+    
+    <!-- TOUCH ICONS FOR IOS -->
+    <link rel="apple-touch-startup-image" href="/static/icons/apple-splash.png">
+    
+    <!-- DISABLE TELEPHONE DETECTION -->
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- MOBILE WEB APP CAPABILITIES -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="VantaVault">
+    
+    <title>VantaVault{% block title %}{% endblock %}</title>
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/animations.css">
+    
+    <!-- Icons -->
+    <link rel="icon" href="/static/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    
+    {% block head %}{% endblock %}
+</head>
+<!-- ADD TOUCH CLASS FOR MOBILE DETECTION -->
+<body class="{% if is_mobile %}touch-device{% endif %}">
+    <div class="app-container">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            // Wait for page to load before registering
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => {
+                        console.log('Service Worker registered');
+                        // Check for updates every hour
+                        setInterval(() => {
+                            reg.update();
+                        }, 60 * 60 * 1000);
+                    })
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+        
+        // Prevent zoom on double-tap (mobile)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Fix for 100vh on mobile
+        function setVh() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        
+        // Initial set
+        setVh();
+        
+        // Update on resize and orientation change
+        window.addEventListener('resize', setVh);
+        window.addEventListener('orientationchange', function() {
+            // Wait for orientation to complete
+            setTimeout(setVh, 150);
+        });
+    </script>
+</body>
+</html>

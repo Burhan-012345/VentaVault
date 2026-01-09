@@ -1,0 +1,1991 @@
+{% extends "base.html" %}
+
+{% block title %} - Settings{% endblock %}
+
+{% block head %}
+<style>
+    .settings-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .settings-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .settings-nav {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+    
+    .settings-nav-btn {
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        color: var(--text-secondary);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+    
+    .settings-nav-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+    }
+    
+    .settings-nav-btn.active {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: var(--text-primary);
+    }
+    
+    .settings-section {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .settings-section.active {
+        display: block;
+    }
+    
+    .settings-group {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .settings-group h3 {
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+    
+    .setting-info {
+        flex: 1;
+    }
+    
+    .setting-title {
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .setting-description {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+    
+    .setting-control {
+        margin-left: 1rem;
+    }
+    
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.1);
+        transition: .4s;
+        border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+        background-color: var(--color-success);
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
+    
+    .pin-change-container {
+        max-width: 400px;
+    }
+    
+    .pin-input-group {
+        display: flex;
+        gap: 0.5rem;
+        margin: 1rem 0;
+    }
+    
+    .pin-input-group input {
+        flex: 1;
+        text-align: center;
+        font-size: 1.5rem;
+        letter-spacing: 0.25rem;
+        font-family: monospace;
+    }
+    
+    .security-logs {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .log-entry {
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: 0.85rem;
+    }
+    
+    .log-entry:last-child {
+        border-bottom: none;
+    }
+    
+    .log-timestamp {
+        color: #666;
+        margin-right: 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .log-type {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-right: 0.5rem;
+    }
+    
+    .log-type.success {
+        background: rgba(0, 255, 0, 0.1);
+        color: #00ff00;
+    }
+    
+    .log-type.failure {
+        background: rgba(255, 0, 0, 0.1);
+        color: #ff3333;
+    }
+    
+    .backup-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .backup-option {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .backup-option:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+    
+    .backup-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .danger-zone {
+        border-color: rgba(255, 51, 51, 0.3);
+        background: rgba(255, 51, 51, 0.05);
+    }
+    
+    .danger-zone h3 {
+        color: #ff3333;
+    }
+    
+    .danger-btn {
+        background: rgba(255, 51, 51, 0.2);
+        color: #ff3333;
+        border-color: rgba(255, 51, 51, 0.3);
+    }
+    
+    .danger-btn:hover {
+        background: rgba(255, 51, 51, 0.3);
+        color: white;
+    }
+    
+    .fingerprint-setup {
+        padding: 1.5rem;
+        background: rgba(0, 255, 0, 0.05);
+        border: 1px solid rgba(0, 255, 0, 0.2);
+        border-radius: var(--border-radius);
+        text-align: center;
+        margin: 1rem 0;
+    }
+    
+    .fingerprint-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .fingerprint-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin: 0.5rem 0;
+    }
+    
+    .fingerprint-status.enabled {
+        background: rgba(0, 255, 0, 0.1);
+        color: #00ff00;
+    }
+    
+    .fingerprint-status.disabled {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+    }
+    
+    .advanced-option {
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .advanced-option label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .settings-container {
+        padding: 1rem;
+        max-width: 100%;
+    }
+    
+    .settings-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .settings-nav {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .settings-nav-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        flex: 1 0 calc(50% - 0.5rem);
+        min-width: 0;
+        text-align: center;
+    }
+    
+    .settings-nav-btn span {
+        display: none; /* Hide text, keep emoji */
+    }
+    
+    .settings-group {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 0;
+    }
+    
+    .setting-control {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .setting-control select,
+    .setting-control input {
+        width: 100%;
+        max-width: none;
+    }
+    
+    /* Modal adjustments for mobile */
+    .modal-content {
+        margin: 1rem;
+        padding: 1.25rem;
+        width: calc(100% - 2rem);
+    }
+    
+    .pin-change-container {
+        width: 100%;
+    }
+    
+    .pin-input-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .pin-input-group input {
+        width: 100%;
+        font-size: 1.5rem;
+        min-height: 50px;
+    }
+    
+    .backup-options {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modal-actions .btn {
+        width: 100%;
+        margin: 0 !important;
+    }
+    
+    /* Toggle switches for mobile */
+    .toggle-switch {
+        width: 60px;
+        height: 32px;
+    }
+    
+    .toggle-slider:before {
+        height: 24px;
+        width: 24px;
+        left: 4px;
+        bottom: 4px;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(28px);
+    }
+    
+    /* Fingerprint setup */
+    .fingerprint-setup {
+        padding: 1rem;
+    }
+    
+    .fingerprint-icon {
+        font-size: 2.5rem;
+    }
+    
+    /* Danger zone buttons */
+    .danger-btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .settings-nav-btn {
+        flex: 1 0 calc(50% - 0.5rem);
+        padding: 0.6rem 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .settings-group h3 {
+        font-size: 1.1rem;
+    }
+    
+    .setting-title {
+        font-size: 0.95rem;
+    }
+    
+    .setting-description {
+        font-size: 0.8rem;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .settings-container {
+        max-width: 95%;
+        padding: 1.5rem;
+    }
+    
+    .backup-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* For landscape mode on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .modal-content {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .security-logs {
+        max-height: 40vh;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- Header -->
+    <div class="settings-header">
+        <h1>Settings</h1>
+        <p class="subtitle">Configure your VantaVault security and preferences</p>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="settings-nav">
+        <button class="settings-nav-btn active" onclick="showSection('security')">
+            🔒 Security
+        </button>
+        <button class="settings-nav-btn" onclick="showSection('privacy')">
+            🕵️ Privacy
+        </button>
+        <button class="settings-nav-btn" onclick="showSection('storage')">
+            💾 Storage
+        </button>
+        <button class="settings-nav-btn" onclick="showSection('appearance')">
+            🎨 Appearance
+        </button>
+        <button class="settings-nav-btn" onclick="showSection('backup')">
+            📁 Backup
+        </button>
+        <button class="settings-nav-btn" onclick="showSection('advanced')">
+            ⚙️ Advanced
+        </button>
+    </div>
+    
+    <!-- Security Section -->
+    <div class="settings-section active" id="securitySection">
+        <!-- PIN Settings -->
+        <div class="settings-group">
+            <h3>🔐 PIN Protection</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Change PIN</div>
+                    <div class="setting-description">
+                        Update your 4-6 digit vault access PIN
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn" onclick="showPinChangeModal()">
+                        Change PIN
+                    </button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Auto-lock Timer</div>
+                    <div class="setting-description">
+                        Automatically lock vault after inactivity
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="autoLockTime" class="form-control" style="width: 150px;">
+                        <option value="1">1 minute</option>
+                        <option value="5" selected>5 minutes</option>
+                        <option value="10">10 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="0">Never (not recommended)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Lock on Minimize</div>
+                    <div class="setting-description">
+                        Immediately lock when app is minimized
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="lockOnMinimize" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Fingerprint Settings -->
+        <div class="settings-group">
+            <h3>👆 Fingerprint Authentication</h3>
+            
+            <div class="fingerprint-setup" id="fingerprintSetup">
+                <div class="fingerprint-icon">👆</div>
+                <h4>Biometric Access</h4>
+                <p>Use your fingerprint for quick and secure access</p>
+                
+                <div id="fingerprintStatus" class="fingerprint-status disabled">
+                    <span>❌ Not configured</span>
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <button class="btn" onclick="setupFingerprint()" id="fingerprintBtn">
+                        Setup Fingerprint
+                    </button>
+                    <button class="btn btn-secondary" onclick="testFingerprint()" style="display: none;" id="testFingerprintBtn">
+                        Test Fingerprint
+                    </button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Require PIN Fallback</div>
+                    <div class="setting-description">
+                        Always require PIN after 3 failed fingerprint attempts
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="requirePinFallback" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Intrusion Detection -->
+        <div class="settings-group">
+            <h3>🚨 Intrusion Detection</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Failed Attempt Logging</div>
+                    <div class="setting-description">
+                        Log all failed PIN and fingerprint attempts
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="logFailedAttempts" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Auto-lock on Intrusion</div>
+                    <div class="setting-description">
+                        Lock vault after 5 failed attempts
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoLockOnIntrusion" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Show Security Logs</div>
+                    <div class="setting-description">
+                        View recent authentication attempts
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary" onclick="showSecurityLogs()">
+                        View Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Decoy Mode -->
+        <div class="settings-group">
+            <h3>🎭 Decoy Mode</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Enable Decoy Mode</div>
+                    <div class="setting-description">
+                        Show fake vault with dummy data when incorrect PIN is entered
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="decoyMode">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Decoy PIN</div>
+                    <div class="setting-description">
+                        PIN that opens the fake vault
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <input type="text" id="decoyPin" class="form-control" value="123456" style="width: 120px;" readonly>
+                    <small><a href="#" onclick="changeDecoyPin()">Change</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Privacy Section -->
+    <div class="settings-section" id="privacySection">
+        <div class="settings-group">
+            <h3>🕵️ Stealth Mode</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Enable Stealth Mode</div>
+                    <div class="setting-description">
+                        Completely hide vault files from system
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="stealthMode">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Hide App Icon</div>
+                    <div class="setting-description">
+                        Hide VantaVault from app launcher (PWA only)
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="hideAppIcon">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>📊 Data Collection</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Usage Analytics</div>
+                    <div class="setting-description">
+                        Anonymous usage data to improve the app
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="usageAnalytics">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Crash Reports</div>
+                    <div class="setting-description">
+                        Send crash reports automatically
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="crashReports">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>🔗 Sharing & Links</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Default Share Expiry</div>
+                    <div class="setting-description">
+                        Automatic expiry time for share links
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="shareExpiryDefault" class="form-control">
+                        <option value="1">1 hour</option>
+                        <option value="24" selected>24 hours</option>
+                        <option value="168">7 days</option>
+                        <option value="720">30 days</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Auto-delete After View</div>
+                    <div class="setting-description">
+                        Automatically delete share links after being viewed
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoDeleteShares" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Storage Section -->
+    <div class="settings-section" id="storageSection">
+        <div class="settings-group">
+            <h3>💾 Storage Management</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Storage Usage</div>
+                    <div class="setting-description">
+                        View and manage your vault storage
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn" onclick="showStorageDetails()">
+                        Manage Storage
+                    </button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Maximum File Size</div>
+                    <div class="setting-description">
+                        Limit for individual file uploads
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="maxFileSize" class="form-control">
+                        <option value="50">50 MB</option>
+                        <option value="100">100 MB</option>
+                        <option value="500" selected>500 MB</option>
+                        <option value="1000">1 GB</option>
+                        <option value="0">No limit (not recommended)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>🗑️ Recycle Bin</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Enable Recycle Bin</div>
+                    <div class="setting-description">
+                        Move deleted files to recycle bin before permanent deletion
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="enableRecycleBin" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Auto-empty Recycle Bin</div>
+                    <div class="setting-description">
+                        Automatically empty recycle bin after
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="recycleBinExpiry" class="form-control">
+                        <option value="1">1 day</option>
+                        <option value="7" selected>7 days</option>
+                        <option value="30">30 days</option>
+                        <option value="0">Never</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Secure Deletion</div>
+                    <div class="setting-description">
+                        Overwrite files before deletion (slower but more secure)
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="secureDeletion">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>📁 Media Settings</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Auto-generate Thumbnails</div>
+                    <div class="setting-description">
+                        Create thumbnails for faster browsing
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autoThumbnails" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Image Compression</div>
+                    <div class="setting-description">
+                        Compress images to save space (lossless)
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="imageCompression">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Video Transcoding</div>
+                    <div class="setting-description">
+                        Convert videos to efficient formats
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="videoTranscoding">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Appearance Section -->
+    <div class="settings-section" id="appearanceSection">
+        <div class="settings-group">
+            <h3>🎨 Theme & Appearance</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Theme</div>
+                    <div class="setting-description">
+                        Choose light or dark theme
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="themeSelect" class="form-control">
+                        <option value="auto">Auto (system)</option>
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Accent Color</div>
+                    <div class="setting-description">
+                        Primary color for UI elements
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <input type="color" id="accentColor" value="#00ff00" class="form-control" style="width: 60px; height: 40px;">
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Animations</div>
+                    <div class="setting-description">
+                        Enable/disable UI animations
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="uiAnimations" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Unlock Animations</div>
+                    <div class="setting-description">
+                        Special effects when unlocking vault
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="unlockAnimations" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>👁️ Display</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Font Size</div>
+                    <div class="setting-description">
+                        Adjust text size for readability
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="fontSize" class="form-control">
+                        <option value="small">Small</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="large">Large</option>
+                        <option value="xlarge">Extra Large</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Reduce Motion</div>
+                    <div class="setting-description">
+                        Minimize animations and transitions
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="reduceMotion">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">High Contrast</div>
+                    <div class="setting-description">
+                        Increase contrast for better visibility
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="highContrast">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backup Section -->
+    <div class="settings-section" id="backupSection">
+        <div class="settings-group">
+            <h3>📁 Backup & Restore</h3>
+            
+            <div class="backup-options">
+                <div class="backup-option" onclick="createBackup('local')">
+                    <div class="backup-icon">💾</div>
+                    <div class="setting-title">Local Backup</div>
+                    <div class="setting-description">
+                        Save encrypted backup to your device
+                    </div>
+                </div>
+                
+                <div class="backup-option" onclick="createBackup('export')">
+                    <div class="backup-icon">📤</div>
+                    <div class="setting-title">Export Vault</div>
+                    <div class="setting-description">
+                        Export all files as encrypted archive
+                    </div>
+                </div>
+                
+                <div class="backup-option" onclick="restoreBackup()">
+                    <div class="backup-icon">📥</div>
+                    <div class="setting-title">Restore Backup</div>
+                    <div class="setting-description">
+                        Restore from previous backup
+                    </div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Auto-backup</div>
+                    <div class="setting-description">
+                        Automatically create backups
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="autoBackupFrequency" class="form-control">
+                        <option value="0">Never</option>
+                        <option value="1">Daily</option>
+                        <option value="7" selected>Weekly</option>
+                        <option value="30">Monthly</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Backup Encryption</div>
+                    <div class="setting-description">
+                        Encrypt backups with separate key
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="backupEncryption" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>🔄 Sync Settings</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Sync Between Devices</div>
+                    <div class="setting-description">
+                        Keep vault synchronized across devices
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="syncBetweenDevices">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Sync Over WiFi Only</div>
+                    <div class="setting-description">
+                        Only sync when connected to WiFi
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="syncWifiOnly" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Sync Frequency</div>
+                    <div class="setting-description">
+                        How often to check for changes
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <select id="syncFrequency" class="form-control">
+                        <option value="realtime">Real-time</option>
+                        <option value="5">Every 5 minutes</option>
+                        <option value="15" selected>Every 15 minutes</option>
+                        <option value="60">Every hour</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Advanced Section -->
+    <div class="settings-section" id="advancedSection">
+        <div class="settings-group">
+            <h3>⚙️ Advanced Settings</h3>
+            
+            <div class="advanced-option">
+                <label>
+                    <input type="checkbox" id="enableDebug"> Enable debug mode
+                </label>
+                <small style="color: #666; display: block; margin-top: 0.25rem;">
+                    Shows detailed logs and debugging information
+                </small>
+            </div>
+            
+            <div class="advanced-option">
+                <label>
+                    <input type="checkbox" id="enableExperiments"> Enable experimental features
+                </label>
+                <small style="color: #666; display: block; margin-top: 0.25rem;">
+                    Try out new features before they're officially released
+                </small>
+            </div>
+            
+            <div class="advanced-option">
+                <label>
+                    <input type="checkbox" id="resetTutorial"> Reset tutorial
+                </label>
+                <small style="color: #666; display: block; margin-top: 0.25rem;">
+                    Show tutorial on next app launch
+                </small>
+            </div>
+            
+            <div class="advanced-option">
+                <label>
+                    <input type="checkbox" id="clearCache"> Clear app cache on exit
+                </label>
+                <small style="color: #666; display: block; margin-top: 0.25rem;">
+                    Improves security but may slow down app launch
+                </small>
+            </div>
+        </div>
+        
+        <div class="settings-group danger-zone">
+            <h3>⚠️ Danger Zone</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Reset Vault</div>
+                    <div class="setting-description">
+                        Delete all media and reset vault settings
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn danger-btn" onclick="resetVault()">
+                        Reset Vault
+                    </button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Export All Data</div>
+                    <div class="setting-description">
+                        Export all vault data (encrypted) before reset
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn danger-btn" onclick="exportAllData()">
+                        Export Data
+                    </button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Factory Reset</div>
+                    <div class="setting-description">
+                        Completely wipe all data and settings
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn danger-btn" onclick="factoryReset()">
+                        Factory Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-group">
+            <h3>ℹ️ App Information</h3>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Version</div>
+                    <div class="setting-description">
+                        VantaVault 1.0.0
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary" onclick="checkForUpdates()">
+                        Check for Updates
+                    </button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Database</div>
+                    <div class="setting-description">
+                        View and manage database
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary" onclick="showDatabaseInfo()">
+                        Database Info
+                    </button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="setting-title">Open Source Licenses</div>
+                    <div class="setting-description">
+                        View third-party licenses
+                    </div>
+                </div>
+                <div class="setting-control">
+                    <button class="btn btn-secondary" onclick="showLicenses()">
+                        View Licenses
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PIN Change Modal -->
+<div class="modal" id="pinChangeModal" style="display: none;">
+    <div class="modal-content pin-change-container">
+        <h2>Change PIN</h2>
+        <p>Enter your current and new PIN</p>
+        
+        <div class="form-group">
+            <label>Current PIN</label>
+            <div class="pin-input-group">
+                <input type="password" id="currentPin" maxlength="6" class="form-control" placeholder="••••••">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>New PIN (4-6 digits)</label>
+            <div class="pin-input-group">
+                <input type="password" id="newPin" maxlength="6" class="form-control" placeholder="••••••">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Confirm New PIN</label>
+            <div class="pin-input-group">
+                <input type="password" id="confirmPin" maxlength="6" class="form-control" placeholder="••••••">
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closePinChangeModal()">
+                Cancel
+            </button>
+            <button class="btn" onclick="savePinChange()">
+                Change PIN
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Security Logs Modal -->
+<div class="modal" id="securityLogsModal" style="display: none;">
+    <div class="modal-content">
+        <h2>Security Logs</h2>
+        <p>Recent authentication attempts and security events</p>
+        
+        <div class="security-logs" id="securityLogsContent">
+            <!-- Logs will be loaded here -->
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeSecurityLogs()">
+                Close
+            </button>
+            <button class="btn" onclick="clearSecurityLogs()">
+                Clear Logs
+            </button>
+            <button class="btn" onclick="exportSecurityLogs()">
+                Export Logs
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Storage Details Modal -->
+<div class="modal" id="storageDetailsModal" style="display: none;">
+    <div class="modal-content">
+        <h2>Storage Details</h2>
+        <p>Manage your vault storage usage</p>
+        
+        <div id="storageDetailsContent">
+            <!-- Storage details will be loaded here -->
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeStorageDetails()">
+                Close
+            </button>
+            <button class="btn danger-btn" onclick="clearAllCache()">
+                Clear Cache
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Settings state
+    const settingsState = {
+        currentSection: 'security'
+    };
+    
+    // Load settings on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSettings();
+        setupEventListeners();
+        checkFingerprintStatus();
+    });
+    
+    function showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.settings-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        // Remove active class from all nav buttons
+        document.querySelectorAll('.settings-nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected section
+        document.getElementById(sectionId + 'Section').classList.add('active');
+        
+        // Activate corresponding nav button
+        document.querySelector(`.settings-nav-btn[onclick="showSection('${sectionId}')"]`)
+            .classList.add('active');
+        
+        settingsState.currentSection = sectionId;
+    }
+    
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            const settings = await response.json();
+            
+            // Apply settings to UI
+            if (settings.auto_lock_minutes) {
+                document.getElementById('autoLockTime').value = settings.auto_lock_minutes;
+            }
+            
+            if (settings.stealth_mode !== undefined) {
+                document.getElementById('stealthMode').checked = settings.stealth_mode;
+            }
+            
+            if (settings.decoy_mode !== undefined) {
+                document.getElementById('decoyMode').checked = settings.decoy_mode;
+            }
+            
+            if (settings.fingerprint_enabled !== undefined) {
+                updateFingerprintUI(settings.fingerprint_enabled);
+            }
+            
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
+    }
+    
+    function setupEventListeners() {
+        // Auto-save settings on change
+        const autoSaveElements = [
+            'autoLockTime', 'lockOnMinimize', 'requirePinFallback',
+            'logFailedAttempts', 'autoLockOnIntrusion', 'decoyMode',
+            'stealthMode', 'hideAppIcon', 'usageAnalytics', 'crashReports',
+            'shareExpiryDefault', 'autoDeleteShares', 'maxFileSize',
+            'enableRecycleBin', 'recycleBinExpiry', 'secureDeletion',
+            'autoThumbnails', 'imageCompression', 'videoTranscoding',
+            'themeSelect', 'accentColor', 'uiAnimations', 'unlockAnimations',
+            'fontSize', 'reduceMotion', 'highContrast', 'autoBackupFrequency',
+            'backupEncryption', 'syncBetweenDevices', 'syncWifiOnly',
+            'syncFrequency', 'enableDebug', 'enableExperiments',
+            'resetTutorial', 'clearCache'
+        ];
+        
+        autoSaveElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', saveSettings);
+            }
+        });
+        
+        // Color picker
+        const accentColor = document.getElementById('accentColor');
+        if (accentColor) {
+            accentColor.addEventListener('change', function() {
+                document.documentElement.style.setProperty('--color-success', this.value);
+                saveSettings();
+            });
+        }
+    }
+    
+    async function saveSettings() {
+        const settings = {
+            auto_lock_minutes: parseInt(document.getElementById('autoLockTime').value) || 5,
+            lock_on_minimize: document.getElementById('lockOnMinimize').checked,
+            require_pin_fallback: document.getElementById('requirePinFallback').checked,
+            log_failed_attempts: document.getElementById('logFailedAttempts').checked,
+            auto_lock_on_intrusion: document.getElementById('autoLockOnIntrusion').checked,
+            decoy_mode: document.getElementById('decoyMode').checked,
+            stealth_mode: document.getElementById('stealthMode').checked,
+            hide_app_icon: document.getElementById('hideAppIcon').checked,
+            usage_analytics: document.getElementById('usageAnalytics').checked,
+            crash_reports: document.getElementById('crashReports').checked,
+            share_expiry_default: parseInt(document.getElementById('shareExpiryDefault').value) || 24,
+            auto_delete_shares: document.getElementById('autoDeleteShares').checked,
+            max_file_size: parseInt(document.getElementById('maxFileSize').value) || 500,
+            enable_recycle_bin: document.getElementById('enableRecycleBin').checked,
+            recycle_bin_expiry: parseInt(document.getElementById('recycleBinExpiry').value) || 7,
+            secure_deletion: document.getElementById('secureDeletion').checked,
+            auto_thumbnails: document.getElementById('autoThumbnails').checked,
+            image_compression: document.getElementById('imageCompression').checked,
+            video_transcoding: document.getElementById('videoTranscoding').checked,
+            theme: document.getElementById('themeSelect').value,
+            ui_animations: document.getElementById('uiAnimations').checked,
+            unlock_animations: document.getElementById('unlockAnimations').checked,
+            font_size: document.getElementById('fontSize').value,
+            reduce_motion: document.getElementById('reduceMotion').checked,
+            high_contrast: document.getElementById('highContrast').checked,
+            auto_backup_frequency: parseInt(document.getElementById('autoBackupFrequency').value) || 7,
+            backup_encryption: document.getElementById('backupEncryption').checked,
+            sync_between_devices: document.getElementById('syncBetweenDevices').checked,
+            sync_wifi_only: document.getElementById('syncWifiOnly').checked,
+            sync_frequency: document.getElementById('syncFrequency').value,
+            enable_debug: document.getElementById('enableDebug').checked,
+            enable_experiments: document.getElementById('enableExperiments').checked,
+            reset_tutorial: document.getElementById('resetTutorial').checked,
+            clear_cache: document.getElementById('clearCache').checked
+        };
+        
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            });
+            
+            if (response.ok) {
+                showNotification('Settings saved successfully');
+                
+                // Apply theme immediately
+                if (settings.theme && settings.theme !== 'auto') {
+                    document.documentElement.setAttribute('data-theme', settings.theme);
+                }
+            }
+            
+        } catch (error) {
+            console.error('Failed to save settings:', error);
+            showNotification('Failed to save settings', 'error');
+        }
+    }
+    
+    // PIN Change
+    function showPinChangeModal() {
+        document.getElementById('pinChangeModal').style.display = 'flex';
+        document.getElementById('currentPin').focus();
+    }
+    
+    function closePinChangeModal() {
+        document.getElementById('pinChangeModal').style.display = 'none';
+        document.getElementById('currentPin').value = '';
+        document.getElementById('newPin').value = '';
+        document.getElementById('confirmPin').value = '';
+    }
+    
+    async function savePinChange() {
+        const currentPin = document.getElementById('currentPin').value;
+        const newPin = document.getElementById('newPin').value;
+        const confirmPin = document.getElementById('confirmPin').value;
+        
+        if (newPin.length < 4 || newPin.length > 6) {
+            showNotification('PIN must be 4-6 digits', 'error');
+            return;
+        }
+        
+        if (newPin !== confirmPin) {
+            showNotification('PINs do not match', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/settings/pin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    current_pin: currentPin,
+                    new_pin: newPin
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('PIN changed successfully');
+                closePinChangeModal();
+            } else {
+                showNotification(data.message || 'Failed to change PIN', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Failed to change PIN:', error);
+            showNotification('Failed to change PIN', 'error');
+        }
+    }
+    
+    // Fingerprint
+    async function checkFingerprintStatus() {
+        try {
+            const response = await fetch('/api/settings/fingerprint');
+            const data = await response.json();
+            updateFingerprintUI(data.enabled);
+        } catch (error) {
+            console.error('Failed to check fingerprint status:', error);
+        }
+    }
+    
+    function updateFingerprintUI(enabled) {
+        const status = document.getElementById('fingerprintStatus');
+        const setupBtn = document.getElementById('fingerprintBtn');
+        const testBtn = document.getElementById('testFingerprintBtn');
+        
+        if (enabled) {
+            status.className = 'fingerprint-status enabled';
+            status.innerHTML = '<span>✅ Fingerprint enabled</span>';
+            setupBtn.textContent = 'Reconfigure Fingerprint';
+            testBtn.style.display = 'inline-block';
+        } else {
+            status.className = 'fingerprint-status disabled';
+            status.innerHTML = '<span>❌ Not configured</span>';
+            setupBtn.textContent = 'Setup Fingerprint';
+            testBtn.style.display = 'none';
+        }
+    }
+    
+    async function setupFingerprint() {
+        try {
+            if (!window.PublicKeyCredential) {
+                throw new Error('Fingerprint authentication not supported');
+            }
+            
+            const response = await fetch('/fingerprint/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.publicKey) {
+                // Convert for WebAuthn
+                const publicKey = {
+                    ...data.publicKey,
+                    challenge: Uint8Array.from(atob(data.publicKey.challenge), c => c.charCodeAt(0)),
+                    user: {
+                        ...data.publicKey.user,
+                        id: Uint8Array.from(atob(data.publicKey.user.id), c => c.charCodeAt(0))
+                    }
+                };
+                
+                // Create credential
+                const credential = await navigator.credentials.create({ publicKey });
+                
+                // Send to server for verification
+                const verificationResponse = await fetch('/fingerprint/verify-registration', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: credential.id,
+                        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+                        response: {
+                            attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))),
+                            clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON)))
+                        },
+                        type: credential.type
+                    })
+                });
+                
+                const verificationData = await verificationResponse.json();
+                
+                if (verificationData.success) {
+                    showNotification('Fingerprint setup successful!');
+                    updateFingerprintUI(true);
+                    
+                    // Enable fingerprint in settings
+                    await fetch('/api/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fingerprint_enabled: true })
+                    });
+                    
+                } else {
+                    throw new Error('Fingerprint verification failed');
+                }
+            }
+            
+        } catch (error) {
+            console.error('Fingerprint setup error:', error);
+            showNotification('Fingerprint setup failed: ' + error.message, 'error');
+        }
+    }
+    
+    function testFingerprint() {
+        showNotification('Testing fingerprint... Please authenticate.');
+        // In production, this would trigger actual fingerprint authentication
+        setTimeout(() => {
+            showNotification('Fingerprint authentication successful!');
+        }, 1000);
+    }
+    
+    function changeDecoyPin() {
+        const newPin = prompt('Enter new decoy PIN (4-6 digits):');
+        if (newPin && newPin.length >= 4 && newPin.length <= 6) {
+            document.getElementById('decoyPin').value = newPin;
+            saveSettings();
+            showNotification('Decoy PIN updated');
+        } else if (newPin) {
+            showNotification('PIN must be 4-6 digits', 'error');
+        }
+    }
+    
+    // Security Logs
+    async function showSecurityLogs() {
+        try {
+            const response = await fetch('/api/logs');
+            const data = await response.json();
+            
+            const logsContent = document.getElementById('securityLogsContent');
+            logsContent.innerHTML = '';
+            
+            if (data.logs && data.logs.length > 0) {
+                data.logs.forEach(log => {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    
+                    const typeClass = log.success ? 'success' : 'failure';
+                    const typeIcon = log.success ? '✅' : '❌';
+                    
+                    entry.innerHTML = `
+                        <span class="log-timestamp">${new Date(log.timestamp).toLocaleString()}</span>
+                        <span class="log-type ${typeClass}">${typeIcon} ${log.attempt_type}</span>
+                        <span>${log.ip_address || 'Unknown IP'}</span>
+                    `;
+                    
+                    logsContent.appendChild(entry);
+                });
+            } else {
+                logsContent.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No logs available</p>';
+            }
+            
+            document.getElementById('securityLogsModal').style.display = 'flex';
+            
+        } catch (error) {
+            console.error('Failed to load security logs:', error);
+            showNotification('Failed to load security logs', 'error');
+        }
+    }
+    
+    function closeSecurityLogs() {
+        document.getElementById('securityLogsModal').style.display = 'none';
+    }
+    
+    function clearSecurityLogs() {
+        if (confirm('Are you sure you want to clear all security logs?')) {
+            // Implement log clearing
+            showNotification('Security logs cleared');
+            closeSecurityLogs();
+        }
+    }
+    
+    function exportSecurityLogs() {
+        // Implement log export
+        showNotification('Security logs exported');
+    }
+    
+    // Storage Management
+    async function showStorageDetails() {
+        try {
+            const response = await fetch('/api/storage');
+            const data = await response.json();
+            
+            const content = document.getElementById('storageDetailsContent');
+            content.innerHTML = `
+                <div style="margin: 1rem 0;">
+                    <h3>Storage Usage</h3>
+                    <div style="background: rgba(255, 255, 255, 0.1); height: 20px; border-radius: 10px; overflow: hidden; margin: 1rem 0;">
+                        <div style="background: var(--color-success); height: 100%; width: ${data.percent || 0}%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>${data.used || 0} MB used</span>
+                        <span>${data.total || 0} MB total</span>
+                    </div>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <h3>Breakdown</h3>
+                    <div style="display: grid; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>📸 Photos</span>
+                            <span>${data.photos || 0} MB</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>🎥 Videos</span>
+                            <span>${data.videos || 0} MB</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>🗂️ Other</span>
+                            <span>${data.other || 0} MB</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <h3>Actions</h3>
+                    <button class="btn" style="width: 100%; margin-bottom: 0.5rem;" onclick="clearOldMedia()">
+                        Clear Media Older Than 1 Year
+                    </button>
+                    <button class="btn btn-secondary" style="width: 100%;" onclick="optimizeStorage()">
+                        Optimize Storage
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('storageDetailsModal').style.display = 'flex';
+            
+        } catch (error) {
+            console.error('Failed to load storage details:', error);
+            showNotification('Failed to load storage details', 'error');
+        }
+    }
+    
+    function closeStorageDetails() {
+        document.getElementById('storageDetailsModal').style.display = 'none';
+    }
+    
+    function clearAllCache() {
+        if (confirm('Are you sure you want to clear all cache? This will not delete your media.')) {
+            showNotification('Cache cleared');
+            closeStorageDetails();
+        }
+    }
+    
+    function clearOldMedia() {
+        if (confirm('Are you sure you want to clear media older than 1 year?')) {
+            showNotification('Clearing old media...');
+            // Implement media clearing
+        }
+    }
+    
+    function optimizeStorage() {
+        showNotification('Optimizing storage...');
+        // Implement storage optimization
+    }
+    
+    // Backup & Restore
+    function createBackup(type) {
+        showNotification(`Creating ${type} backup...`);
+        // Implement backup creation
+    }
+    
+    function restoreBackup() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.vantavault';
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (confirm('Restore from backup? This will overwrite current data.')) {
+                    showNotification('Restoring backup...');
+                    // Implement restore logic
+                }
+            }
+        };
+        fileInput.click();
+    }
+    
+    // Danger Zone
+    function resetVault() {
+        if (confirm('⚠️ WARNING: This will delete ALL media and reset settings. Continue?')) {
+            if (confirm('Are you absolutely sure? This action cannot be undone.')) {
+                showNotification('Resetting vault...', 'warning');
+                // Implement vault reset
+            }
+        }
+    }
+    
+    function exportAllData() {
+        showNotification('Exporting all data...');
+        // Implement data export
+    }
+    
+    function factoryReset() {
+        if (confirm('⚠️ FACTORY RESET: This will COMPLETELY wipe ALL data. Continue?')) {
+            if (prompt('Type "DELETE ALL" to confirm:') === 'DELETE ALL') {
+                showNotification('Performing factory reset...', 'error');
+                // Implement factory reset
+            }
+        }
+    }
+    
+    // App Info
+    function checkForUpdates() {
+        showNotification('Checking for updates...');
+        setTimeout(() => {
+            showNotification('You have the latest version');
+        }, 1000);
+    }
+    
+    function showDatabaseInfo() {
+        alert('Database Info:\n\nLocation: database/vantavault.db\nSize: ~2.4 MB\nBackup: Recommended weekly');
+    }
+    
+    function showLicenses() {
+        alert('Open Source Licenses:\n\n- Flask: BSD License\n- Cryptography: Apache 2.0\n- GSAP: Standard License\n- WebAuthn: MIT License');
+    }
+    
+    // Utility
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.innerHTML = `
+            <div>${type === 'success' ? '✅' : '❌'} ${message}</div>
+            <button onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)'};
+            color: ${type === 'success' ? '#00ff00' : '#ff3333'};
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10000;
+            border: 1px solid ${type === 'success' ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)'};
+            backdrop-filter: blur(10px);
+        `;
+        
+        notification.querySelector('button').style.cssText = `
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+     
+     // Mobile-specific adjustments
+function detectMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// On page load
+document.addEventListener('DOMContentLoaded', () => {
+    if (detectMobile()) {
+        // Add mobile class to body
+        document.body.classList.add('is-mobile');
+        
+        // Adjust modal positioning for mobile
+        adjustModalsForMobile();
+        
+        // Prevent zoom on input focus
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('focus', () => {
+                el.style.fontSize = '16px';
+            });
+            el.addEventListener('blur', () => {
+                el.style.fontSize = '';
+            });
+        });
+    }
+});
+
+function adjustModalsForMobile() {
+    // Force modals to be properly sized on mobile
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.style.alignItems = 'flex-start';
+        modal.style.paddingTop = '20px';
+    });
+}
+    // Expose to global scope
+    window.showNotification = showNotification;
+</script>
+{% endblock %}

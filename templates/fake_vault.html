@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+
+{% block title %} - Vault{% endblock %}
+
+{% block head %}
+<style>
+    .fake-vault {
+        padding: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .fake-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .fake-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .fake-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .warning-banner {
+        background: rgba(255, 165, 0, 0.1);
+        border: 1px solid rgba(255, 165, 0, 0.3);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .warning-icon {
+        color: #ff9900;
+        font-size: 1.5rem;
+    }
+    
+    .dummy-media {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .dummy-item {
+        aspect-ratio: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .dummy-item:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .dummy-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .dummy-text {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .fake-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    .fake-stat {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .fake-stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .fake-stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .fake-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .fake-log {
+        margin-top: 3rem;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .fake-log h3 {
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .log-entry {
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        font-family: monospace;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    .log-entry:last-child {
+        border-bottom: none;
+    }
+    
+    .log-timestamp {
+        color: #666;
+        margin-right: 1rem;
+    }
+    
+    .log-action {
+        color: var(--text-primary);
+    }
+    
+    .lock-prompt {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        z-index: 1000;
+    }
+    
+    .lock-prompt button {
+        background: var(--color-danger);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    
+    .lock-prompt button:hover {
+        background: #ff3333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fake-vault">
+    <!-- Warning Banner -->
+    <div class="warning-banner">
+        <div class="warning-icon">⚠️</div>
+        <div>
+            <strong>Decoy Mode Active</strong>
+            <p>This is a decoy vault. Your real vault is secured elsewhere.</p>
+        </div>
+    </div>
+    
+    <!-- Header -->
+    <div class="fake-header">
+        <h1 class="fake-title">📸 Personal Gallery</h1>
+        <p class="fake-subtitle">Your photos and videos are stored securely here</p>
+        
+        <!-- Fake Stats -->
+        <div class="fake-stats">
+            <div class="fake-stat">
+                <div class="fake-stat-value" id="fakeMediaCount">24</div>
+                <div class="fake-stat-label">Media Files</div>
+            </div>
+            <div class="fake-stat">
+                <div class="fake-stat-value" id="fakeStorage">1.2 GB</div>
+                <div class="fake-stat-label">Storage Used</div>
+            </div>
+            <div class="fake-stat">
+                <div class="fake-stat-value" id="fakeAlbums">3</div>
+                <div class="fake-stat-label">Albums</div>
+            </div>
+            <div class="fake-stat">
+                <div class="fake-stat-value" id="fakeLastSync">Today</div>
+                <div class="fake-stat-label">Last Sync</div>
+            </div>
+        </div>
+        
+        <!-- Fake Actions -->
+        <div class="fake-actions">
+            <button class="btn" onclick="showFakeUpload()">
+                <span>📁 Upload Media</span>
+            </button>
+            <button class="btn btn-secondary" onclick="showFakeAlbums()">
+                <span>📂 View Albums</span>
+            </button>
+            <button class="btn btn-secondary" onclick="showFakeSettings()">
+                <span>⚙️ Settings</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Dummy Media Grid -->
+    <h2>Recent Media</h2>
+    <div class="dummy-media" id="dummyMediaGrid">
+        <!-- Dummy media items will be loaded here -->
+    </div>
+    
+    <!-- Fake Activity Log -->
+    <div class="fake-log">
+        <h3>Recent Activity</h3>
+        <div id="fakeActivityLog">
+            <!-- Activity log entries will be loaded here -->
+        </div>
+    </div>
+    
+    <!-- Lock Prompt -->
+    <div class="lock-prompt" id="lockPrompt">
+        <div>
+            <strong>Session Active</strong>
+            <p>Auto-lock in <span id="lockTimer">05:00</span></p>
+        </div>
+        <button onclick="lockFakeVault()">Lock Now</button>
+    </div>
+</div>
+
+<!-- Fake Upload Modal -->
+<div class="modal" id="fakeUploadModal" style="display: none;">
+    <div class="modal-content">
+        <h2>Upload Media</h2>
+        <p>Select files to add to your gallery</p>
+        
+        <div class="fake-upload-area" id="fakeUploadArea">
+            <div class="upload-placeholder">
+                <div class="upload-icon">📁</div>
+                <p>Drag & drop files here</p>
+                <p class="upload-hint">or click to browse</p>
+                <input type="file" id="fakeFileInput" multiple style="display: none;">
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeFakeUpload()">Cancel</button>
+            <button class="btn" onclick="fakeUploadFiles()" id="fakeUploadBtn" disabled>
+                <span>Upload (0 files)</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Dummy media data
+    const dummyMedia = [
+        { type: 'image', name: 'vacation_photo.jpg', size: '2.4 MB', date: '2024-01-15' },
+        { type: 'video', name: 'birthday_party.mp4', size: '45.2 MB', date: '2024-01-10' },
+        { type: 'image', name: 'sunset.png', size: '1.8 MB', date: '2024-01-05' },
+        { type: 'image', name: 'family_portrait.jpg', size: '3.1 MB', date: '2023-12-28' },
+        { type: 'video', name: 'holiday_video.mov', size: '120.5 MB', date: '2023-12-20' },
+        { type: 'image', name: 'pet_photo.jpg', size: '1.2 MB', date: '2023-12-15' },
+        { type: 'image', name: 'food_blog.jpg', size: '2.7 MB', date: '2023-12-10' },
+        { type: 'video', name: 'concert_clip.mp4', size: '85.3 MB', date: '2023-12-05' },
+        { type: 'image', name: 'nature_walk.jpg', size: '2.1 MB', date: '2023-11-30' },
+        { type: 'image', name: 'work_project.png', size: '1.5 MB', date: '2023-11-25' },
+        { type: 'video', name: 'sports_event.mkv', size: '210.8 MB', date: '2023-11-20' },
+        { type: 'image', name: 'art_gallery.jpg', size: '3.8 MB', date: '2023-11-15' }
+    ];
+    
+    // Fake activity log
+    const fakeActivities = [
+        { time: '10:30 AM', action: 'Viewed album "Holidays 2023"' },
+        { time: '09:15 AM', action: 'Uploaded 3 photos' },
+        { time: 'Yesterday', action: 'Created album "Family Events"' },
+        { time: 'Jan 14', action: 'Shared photo with link' },
+        { time: 'Jan 13', action: 'Deleted 2 old videos' },
+        { time: 'Jan 12', action: 'Organized media into folders' },
+        { time: 'Jan 11', action: 'Backed up gallery to cloud' },
+        { time: 'Jan 10', action: 'Enabled auto-upload feature' }
+    ];
+    
+    // Initialize fake vault
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDummyMedia();
+        loadFakeActivities();
+        startLockTimer();
+        
+        // Set up upload area
+        const uploadArea = document.getElementById('fakeUploadArea');
+        const fileInput = document.getElementById('fakeFileInput');
+        
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = 'rgba(255, 255, 255, 0.1)';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.background = '';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '';
+            handleFakeFileSelect(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleFakeFileSelect(e.target.files);
+        });
+    });
+    
+    function loadDummyMedia() {
+        const grid = document.getElementById('dummyMediaGrid');
+        grid.innerHTML = '';
+        
+        dummyMedia.forEach(media => {
+            const item = document.createElement('div');
+            item.className = 'dummy-item';
+            
+            const icon = media.type === 'image' ? '🖼️' : '🎥';
+            const typeLabel = media.type === 'image' ? 'Photo' : 'Video';
+            
+            item.innerHTML = `
+                <div class="dummy-icon">${icon}</div>
+                <div class="dummy-text">
+                    <strong>${media.name}</strong><br>
+                    <small>${typeLabel} • ${media.size}</small><br>
+                    <small>${media.date}</small>
+                </div>
+            `;
+            
+            grid.appendChild(item);
+        });
+    }
+    
+    function loadFakeActivities() {
+        const log = document.getElementById('fakeActivityLog');
+        log.innerHTML = '';
+        
+        fakeActivities.forEach(activity => {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-timestamp">${activity.time}</span>
+                <span class="log-action">${activity.action}</span>
+            `;
+            log.appendChild(entry);
+        });
+    }
+    
+    function showFakeUpload() {
+        document.getElementById('fakeUploadModal').style.display = 'flex';
+    }
+    
+    function closeFakeUpload() {
+        document.getElementById('fakeUploadModal').style.display = 'none';
+        document.getElementById('fakeFileInput').value = '';
+        document.getElementById('fakeUploadBtn').disabled = true;
+        document.getElementById('fakeUploadBtn').innerHTML = '<span>Upload (0 files)</span>';
+    }
+    
+    function handleFakeFileSelect(files) {
+        if (files.length > 0) {
+            document.getElementById('fakeUploadBtn').disabled = false;
+            document.getElementById('fakeUploadBtn').innerHTML = 
+                `<span>Upload (${files.length} file${files.length > 1 ? 's' : ''})</span>`;
+        }
+    }
+    
+    function fakeUploadFiles() {
+        const uploadBtn = document.getElementById('fakeUploadBtn');
+        const originalText = uploadBtn.innerHTML;
+        
+        // Show fake upload progress
+        uploadBtn.innerHTML = '<span>Uploading...</span>';
+        uploadBtn.disabled = true;
+        
+        // Simulate upload delay
+        setTimeout(() => {
+            // Simulate random success/failure
+            const success = Math.random() > 0.3;
+            
+            if (success) {
+                uploadBtn.innerHTML = '<span>✅ Upload Complete!</span>';
+                
+                // Add fake notification
+                showFakeNotification('Files uploaded successfully');
+                
+                // Update fake stats
+                updateFakeStats();
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    closeFakeUpload();
+                }, 1500);
+            } else {
+                uploadBtn.innerHTML = '<span>❌ Upload Failed</span>';
+                setTimeout(() => {
+                    uploadBtn.innerHTML = originalText;
+                    uploadBtn.disabled = false;
+                }, 1500);
+            }
+        }, 2000);
+    }
+    
+    function updateFakeStats() {
+        // Randomly increment stats
+        const mediaCount = document.getElementById('fakeMediaCount');
+        const storage = document.getElementById('fakeStorage');
+        
+        let currentCount = parseInt(mediaCount.textContent) || 24;
+        let currentStorage = parseFloat(storage.textContent) || 1.2;
+        
+        const newCount = currentCount + Math.floor(Math.random() * 3) + 1;
+        const newStorage = currentStorage + (Math.random() * 0.2) + 0.1;
+        
+        mediaCount.textContent = newCount;
+        storage.textContent = newStorage.toFixed(1) + ' GB';
+    }
+    
+    function showFakeNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'fake-notification';
+        notification.innerHTML = `
+            <div>📢 ${message}</div>
+            <button onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 10000;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        `;
+        
+        notification.querySelector('button').style.cssText = `
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    function showFakeAlbums() {
+        showFakeNotification('Opening albums...');
+        // In a real decoy system, you might show fake albums
+    }
+    
+    function showFakeSettings() {
+        showFakeNotification('Opening settings...');
+        // In a real decoy system, you might show fake settings
+    }
+    
+    // Auto-lock timer
+    let lockTimer = 5 * 60; // 5 minutes in seconds
+    let lockInterval;
+    
+    function startLockTimer() {
+        updateLockTimerDisplay();
+        lockInterval = setInterval(() => {
+            lockTimer--;
+            updateLockTimerDisplay();
+            
+            if (lockTimer <= 0) {
+                lockFakeVault();
+            }
+        }, 1000);
+        
+        // Reset timer on user activity
+        ['mousemove', 'keypress', 'click', 'scroll'].forEach(event => {
+            document.addEventListener(event, () => {
+                lockTimer = 5 * 60;
+                updateLockTimerDisplay();
+            });
+        });
+    }
+    
+    function updateLockTimerDisplay() {
+        const minutes = Math.floor(lockTimer / 60);
+        const seconds = lockTimer % 60;
+        document.getElementById('lockTimer').textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    async function lockFakeVault() {
+        clearInterval(lockInterval);
+        
+        try {
+            await fetch('/api/lock', { method: 'POST' });
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Failed to lock vault:', error);
+            window.location.href = '/';
+        }
+    }
+    
+    // Lock when tab/app is minimized
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            // You can choose to lock immediately or just reset timer
+            // lockFakeVault();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+
+{% block title %} - Setup PIN{% endblock %}
+
+{% block head %}
+<style>
+    .setup-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    }
+    
+    .setup-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        max-width: 400px;
+    }
+    
+    .setup-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    .setup-title {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #00ff00, #00cc00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+    
+    .setup-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+    
+    .pin-setup-area {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        max-width: 400px;
+        width: 100%;
+    }
+    
+    .pin-input-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .pin-input-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .pin-input-display {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .pin-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+    
+    .pin-dot.filled {
+        background: var(--color-success);
+        border-color: var(--color-success);
+        box-shadow: 0 0 10px var(--color-success);
+    }
+    
+    .pin-hint {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-top: 1rem;
+    }
+    
+    .setup-keypad {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .keypad-row {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .keypad-btn {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .keypad-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(1.05);
+    }
+    
+    .keypad-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .keypad-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .setup-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .security-tips {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: rgba(0, 255, 0, 0.05);
+        border: 1px solid rgba(0, 255, 0, 0.1);
+        border-radius: var(--border-radius);
+    }
+    
+    .security-tips h4 {
+        color: var(--color-success);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .security-tips ul {
+        padding-left: 1.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .security-tips li {
+        margin-bottom: 0.5rem;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="setup-container">
+    <!-- Header -->
+    <div class="setup-header">
+        <div class="setup-icon">🔐</div>
+        <h1 class="setup-title">Welcome to VantaVault</h1>
+        <p class="setup-subtitle">
+            Create a secure 6-digit PIN to protect your private photos and videos.
+            This PIN cannot be recovered if forgotten.
+        </p>
+    </div>
+    
+    <!-- PIN Setup Area -->
+    <div class="pin-setup-area">
+        <!-- Step 1: Enter PIN -->
+        <div id="step1">
+            <h3>Step 1: Create your PIN</h3>
+            <div class="pin-input-group">
+                <div class="pin-input-display" id="pinDisplay1">
+                    {% for i in range(6) %}
+                    <div class="pin-dot" data-index="{{ i }}"></div>
+                    {% endfor %}
+                </div>
+                <div class="pin-hint">Enter 6-digit PIN</div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Confirm PIN (hidden initially) -->
+        <div id="step2" style="display: none;">
+            <h3>Step 2: Confirm your PIN</h3>
+            <div class="pin-input-group">
+                <div class="pin-input-display" id="pinDisplay2">
+                    {% for i in range(6) %}
+                    <div class="pin-dot" data-index="{{ i }}"></div>
+                    {% endfor %}
+                </div>
+                <div class="pin-hint">Re-enter the same PIN</div>
+            </div>
+        </div>
+        
+        <!-- Keypad -->
+        <div class="setup-keypad">
+            <div class="keypad-row">
+                <button class="keypad-btn" data-key="1">1</button>
+                <button class="keypad-btn" data-key="2">2</button>
+                <button class="keypad-btn" data-key="3">3</button>
+            </div>
+            <div class="keypad-row">
+                <button class="keypad-btn" data-key="4">4</button>
+                <button class="keypad-btn" data-key="5">5</button>
+                <button class="keypad-btn" data-key="6">6</button>
+            </div>
+            <div class="keypad-row">
+                <button class="keypad-btn" data-key="7">7</button>
+                <button class="keypad-btn" data-key="8">8</button>
+                <button class="keypad-btn" data-key="9">9</button>
+            </div>
+            <div class="keypad-row">
+                <button class="keypad-btn" id="clearBtn">⌫</button>
+                <button class="keypad-btn" data-key="0">0</button>
+                <button class="keypad-btn" id="nextBtn" disabled>Next</button>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="setup-actions">
+            <button class="btn btn-secondary" id="backBtn" style="display: none;">Back</button>
+            <button class="btn" id="submitBtn" style="display: none;">Create Vault</button>
+        </div>
+    </div>
+    
+    <!-- Security Tips -->
+    <div class="security-tips">
+        <h4>🔒 Security Tips</h4>
+        <ul>
+            <li>Choose a PIN that's easy for you to remember but hard for others to guess</li>
+            <li>Avoid simple patterns like 123456 or 000000</li>
+            <li>Don't use your birthdate or phone number</li>
+            <li>Consider writing it down in a secure place</li>
+            <li>This PIN cannot be recovered - you must remember it!</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none;">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Creating your secure vault...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    class PinSetup {
+        constructor() {
+            this.step = 1;
+            this.pin1 = '';
+            this.pin2 = '';
+            this.maxLength = 6;
+            this.init();
+        }
+        
+        init() {
+            this.setupEventListeners();
+            this.updateUI();
+        }
+        
+        setupEventListeners() {
+            // Numeric keypad
+            document.querySelectorAll('.keypad-btn[data-key]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const key = e.target.dataset.key;
+                    this.addDigit(key);
+                });
+            });
+            
+            // Clear button
+            document.getElementById('clearBtn').addEventListener('click', () => {
+                this.clearCurrentPin();
+            });
+            
+            // Next button
+            document.getElementById('nextBtn').addEventListener('click', () => {
+                this.nextStep();
+            });
+            
+            // Back button
+            document.getElementById('backBtn').addEventListener('click', () => {
+                this.prevStep();
+            });
+            
+            // Submit button
+            document.getElementById('submitBtn').addEventListener('click', () => {
+                this.submitPin();
+            });
+            
+            // Keyboard support
+            document.addEventListener('keydown', (e) => {
+                if (e.key >= '0' && e.key <= '9') {
+                    this.addDigit(e.key);
+                } else if (e.key === 'Backspace') {
+                    this.clearCurrentPin();
+                } else if (e.key === 'Enter') {
+                    if (this.step === 1) {
+                        this.nextStep();
+                    } else {
+                        this.submitPin();
+                    }
+                }
+            });
+        }
+        
+        addDigit(digit) {
+            if (this.step === 1) {
+                if (this.pin1.length >= this.maxLength) return;
+                this.pin1 += digit;
+                this.updatePinDisplay('pinDisplay1', this.pin1);
+            } else {
+                if (this.pin2.length >= this.maxLength) return;
+                this.pin2 += digit;
+                this.updatePinDisplay('pinDisplay2', this.pin2);
+            }
+            
+            this.updateNextButton();
+        }
+        
+        clearCurrentPin() {
+            if (this.step === 1) {
+                this.pin1 = '';
+                this.updatePinDisplay('pinDisplay1', '');
+            } else {
+                this.pin2 = '';
+                this.updatePinDisplay('pinDisplay2', '');
+            }
+            
+            this.updateNextButton();
+        }
+        
+        updatePinDisplay(displayId, pin) {
+            const display = document.getElementById(displayId);
+            const dots = display.querySelectorAll('.pin-dot');
+            
+            dots.forEach((dot, index) => {
+                if (index < pin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+        
+        updateNextButton() {
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (this.step === 1) {
+                nextBtn.disabled = this.pin1.length !== this.maxLength;
+            } else {
+                submitBtn.disabled = this.pin2.length !== this.maxLength;
+            }
+        }
+        
+        nextStep() {
+            if (this.pin1.length !== this.maxLength) return;
+            
+            // Check for simple PIN
+            if (this.isSimplePin(this.pin1)) {
+                this.showError('PIN is too simple. Choose a more complex PIN.');
+                return;
+            }
+            
+            this.step = 2;
+            this.updateUI();
+        }
+        
+        prevStep() {
+            this.step = 1;
+            this.pin2 = '';
+            this.updateUI();
+        }
+        
+        isSimplePin(pin) {
+            // Check for all same digits
+            if (new Set(pin).size === 1) return true;
+            
+            // Check for sequential digits
+            const sequential = ['123456', '234567', '345678', '456789', '567890',
+                              '098765', '987654', '876543', '765432', '654321'];
+            if (sequential.includes(pin)) return true;
+            
+            // Check for common patterns
+            const common = ['000000', '111111', '222222', '333333', '444444',
+                          '555555', '666666', '777777', '888888', '999999',
+                          '123123', '112233', '121212'];
+            if (common.includes(pin)) return true;
+            
+            return false;
+        }
+        
+        async submitPin() {
+            if (this.pin1 !== this.pin2) {
+                this.showError('PINs do not match. Please try again.');
+                this.prevStep();
+                return;
+            }
+            
+            // Show loading
+            this.showLoading();
+            
+            try {
+                const response = await fetch('/api/setup/pin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pin: this.pin1,
+                        confirm_pin: this.pin2
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store session
+                    sessionStorage.setItem('session_id', data.session_id);
+                    
+                    // Redirect to unlock animation
+                    window.location.href = `/unlock/animation?token=${data.animation_token}`;
+                } else {
+                    this.hideLoading();
+                    this.showError(data.error || 'Setup failed');
+                    this.prevStep();
+                }
+                
+            } catch (error) {
+                this.hideLoading();
+                this.showError('Network error. Please try again.');
+                console.error('Setup error:', error);
+            }
+        }
+        
+        updateUI() {
+            // Show/hide steps
+            document.getElementById('step1').style.display = this.step === 1 ? 'block' : 'none';
+            document.getElementById('step2').style.display = this.step === 2 ? 'block' : 'none';
+            
+            // Show/hide buttons
+            document.getElementById('backBtn').style.display = this.step === 2 ? 'inline-block' : 'none';
+            document.getElementById('nextBtn').style.display = this.step === 1 ? 'inline-block' : 'none';
+            document.getElementById('submitBtn').style.display = this.step === 2 ? 'inline-block' : 'none';
+            
+            // Update button text
+            if (this.step === 1) {
+                document.getElementById('nextBtn').textContent = 'Next →';
+            }
+            
+            // Clear displays
+            this.updatePinDisplay('pinDisplay1', this.pin1);
+            this.updatePinDisplay('pinDisplay2', this.pin2);
+            
+            // Update button states
+            this.updateNextButton();
+        }
+        
+        showError(message) {
+            // Create error notification
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-notification';
+            errorDiv.innerHTML = `
+                <span>❌ ${message}</span>
+                <button onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(255, 51, 51, 0.1);
+                color: #ff3333;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                z-index: 10000;
+                border: 1px solid rgba(255, 51, 51, 0.3);
+                backdrop-filter: blur(10px);
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(errorDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        showLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'flex';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                backdrop-filter: blur(10px);
+            `;
+            
+            overlay.innerHTML = `
+                <div class="loading-content" style="text-align: center;">
+                    <div class="spinner" style="width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #00ff00; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                    <p style="color: #fff; font-size: 1.2rem;">Creating your secure vault...</p>
+                </div>
+            `;
+        }
+        
+        hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'none';
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        window.pinSetup = new PinSetup();
+    });
+</script>
+{% endblock %}
